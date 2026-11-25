@@ -633,7 +633,7 @@ function choiceRow(...btns){ const d = document.createElement('div'); d.classNam
    ヒアリングフロー
    ========================================================= */
 function startFlow(){
-  S.path=null; S.topic=''; S.nothing=false; S.result=null;
+  S.path=null; S.topic=''; S.nothing=false; S.kind=''; S.result=null;
   ctx(); SFX.yes();
   talk('ようこそ！シャウトAIです。<br>いきなりですが…<em>いま、なにか挑戦していること</em>はありますか？', () =>
     choiceRow(
@@ -675,23 +675,55 @@ function inviteYes(){
       megaBtn('今日はやめておく', 'no', () => { SFX.no(); farewell(); }),
     ));
 }
+// 「ない」系の答え（引き出しの問いへ進む）
+const NONE_RE = /^(特にない|とくにない|特になし|とくになし|ない|なし|本当にない|ほんとにない|思いつかない|わからない|分からない|べつに|別に)[。!！…]*$/;
 function askInterest(){
   S.path = 'no';
   talk('大丈夫です！<br>では、<em>いま取り組んでいること</em>や、<em>気になっていること</em>は何ですか？', () =>
     answerBox('例：仕事、子育て、推し活…', ['仕事','家事・子育て','勉強','健康づくり','推し活','ゲーム','料理','特にない'], v => {
-      S.topic = v; S.nothing = /^(特にない|とくにない|ない|なし|特になし)$/.test(v); affirmNo();
+      if(NONE_RE.test(v)) return probeAbsorbed();
+      S.topic = v; S.kind = 'now'; affirmNo();
+    }));
+}
+// 引き出し①：夢中になっていること（「挑戦」という言葉を使わずに聞く）
+function probeAbsorbed(){
+  talk('全然OKです！質問を変えますね。<br>最近、<em>気づいたら時間を忘れてやっていること</em>って、ありますか？<br>小さいことでも大歓迎です。', () =>
+    answerBox('例：散歩、動画を見る、子どもと遊ぶ…', ['ゲーム・動画','料理','散歩・運動','好きなものを集める','子どもと遊ぶ','人とおしゃべり','本当にない'], v => {
+      if(NONE_RE.test(v)) return probeSomeday();
+      S.topic = v; S.kind = 'absorbed'; affirmNo();
+    }));
+}
+// 引き出し②：いつかやってみたいこと
+function probeSomeday(){
+  talk('なるほど！じゃあ、<em>「いつかやってみたいな」</em>と<br>ちょっとでも思うことはありますか？', () =>
+    answerBox('例：海外旅行、ギターを弾く…', ['旅行','新しい趣味','体づくり','資格をとる','何かを作る','だれかの役に立つ','思いつかない'], v => {
+      if(NONE_RE.test(v)) return probeSelf();
+      S.topic = v; S.kind = 'someday'; affirmNo();
+    }));
+}
+// 引き出し③：今日の自分へのひとこと（ここで必ず言葉が決まる）
+function probeSelf(){
+  talk('では最後にひとつだけ。<br><em>ここまでがんばってきた自分</em>に、<br>ひとこと声をかけるなら？', () =>
+    answerBox('例：いつもおつかれ！', ['いつもおつかれ！','よくやってる！','明日もがんばる！','もっと楽しむぞ！'], v => {
+      S.topic = v; S.kind = 'self'; affirmNo();
     }));
 }
 function affirmNo(){
-  const g = genreOf(S.topic);
+  const g = genreOf(S.topic), t = esc(S.topic);
+  S.nothing = S.kind === 'self';
   let html;
-  if(S.nothing){
-    S.topic = '今日ここに来たこと';
-    S.suggested = 'これからも、がんばるぞーー！';
-    html = 'ここに来て、話を聞いてくれた。<br>それが<em>もう一歩目</em>です。<br>まわりの人にも、その一歩はちゃんと伝わりますよ。';
+  if(S.kind === 'self'){
+    S.suggested = S.topic.replace(/[。！!]+$/,'') + 'ーー！';
+    html = `<em>「${t}」</em>、いい言葉です！<br>自分にちゃんと声をかけられる人は、<br>まわりの人にも、やさしく声をかけられる人です。`;
+  }else if(S.kind === 'someday'){
+    S.suggested = `${S.topic.replace(/[。！!]+$/,'')}、やってみるぞーー！`;
+    html = `<em>「${t}」</em>、いいですね！<br>「やってみたい」を口に出せた時点で、<br><em>挑戦はもう始まって</em>ます。`;
+  }else if(S.kind === 'absorbed'){
+    S.suggested = makeShout(S.topic);
+    html = `時間を忘れるくらい<em>「${t}」</em>に夢中になれるって、すごいことです。<br>${g.no}<br>それ、<em>立派な挑戦</em>ですよ！`;
   }else{
     S.suggested = makeShout(S.topic);
-    html = `<em>「${esc(S.topic)}」</em>に取り組んでるんですね。<br>${g.no}<br>それ、<em>立派な挑戦</em>ですよ！`;
+    html = `<em>「${t}」</em>に取り組んでるんですね。<br>${g.no}<br>それ、<em>立派な挑戦</em>ですよ！`;
   }
   talk(html, () => choiceRow(megaBtn('つぎへ', 'yes', inviteNo)));
 }
