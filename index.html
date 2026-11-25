@@ -74,12 +74,20 @@ main{flex:1;position:relative}
 .avatar .face-img{position:absolute;inset:0;border-radius:50%;overflow:hidden;background:#efe8dc;border:5px solid var(--yellow);box-shadow:5px 5px 0 var(--pink),0 0 34px rgba(255,225,74,.35);display:none;transform-origin:50% 90%}
 .has-mascot .avatar .face-img{display:block;animation:bob 2.6s ease-in-out infinite}
 .has-mascot .avatar .core{display:none}
-.avatar .face-img img{width:100%;height:100%;object-fit:cover;object-position:50% 30%;transform:scale(1.4) translateY(14%)}
+.avatar .face-img img{width:100%;height:100%;object-fit:cover;object-position:50% 30%;transform:scale(2) translateY(13%)}
 .has-mascot .avatar.talk .face-img{animation:chatter .26s ease-in-out infinite alternate}
 @keyframes bob{50%{transform:translateY(-4px) rotate(-2deg)}}
 @keyframes chatter{from{transform:rotate(-4deg) translateY(0)}to{transform:rotate(4deg) translateY(-5px)}}
 .has-mascot .avatar{flex-basis:138px;height:138px}
-.logo-mascot{display:none;width:34px;height:34px;border-radius:50%;object-fit:cover;object-position:50% 25%;background:#efe8dc;border:2px solid var(--yellow);vertical-align:middle;margin-right:8px}
+.logo-mascot{display:none;width:36px;height:36px;border-radius:50%;background:#efe8dc url(shout-ai.png) 50% 30%/210% no-repeat;border:2px solid var(--yellow);vertical-align:middle;margin-right:8px}
+/* トップ・別れ画面のシマウマ */
+.mascot-big{display:none;position:relative;width:min(30vh,250px);aspect-ratio:1;border-radius:28px;background:#efe8dc url(shout-ai.png) 50% 38%/150% no-repeat;border:6px solid var(--yellow);box-shadow:10px 10px 0 var(--pink);transform:rotate(4deg);animation:bob 2.6s ease-in-out infinite;flex:0 0 auto}
+.has-mascot .mascot-big{display:block}
+.mascot-big .say{position:absolute;top:-26px;right:-40px;background:var(--pink);color:#fff;font-family:var(--head);font-size:22px;padding:8px 16px;border-radius:16px;transform:rotate(8deg);white-space:nowrap;box-shadow:4px 4px 0 rgba(0,0,0,.35)}
+.mascot-big.small{width:min(20vh,170px);margin:0 auto 20px;transform:rotate(-3deg)}
+.title-main .mascot-row{display:flex;align-items:center;justify-content:center;gap:40px}
+.has-mascot .big-title{font-size:min(7.4vw,16vh,150px)}
+.has-mascot .title-main .mascot-big{width:min(28vh,230px)}
 .has-mascot .logo-mascot{display:inline-block}
 .avatar .ring{position:absolute;inset:0;border-radius:50%;border:3px solid var(--cyan);opacity:.7;animation:ring 2.4s ease-out infinite}
 .avatar .ring.r2{animation-delay:1.2s}
@@ -241,6 +249,67 @@ body.demo .demo-tag{display:block}
   .card-stage{width:min(70vw,340px)}
   .avatar{flex-basis:72px;height:72px}
 }
+/* ===== スマホ ===== */
+.screen{overflow-y:auto;justify-content:safe center}
+@media (max-width:600px){
+  header{padding:12px 14px 0}
+  .logo{font-size:17px}
+  .hbtn{font-size:0;padding:8px 12px}.hbtn::before{content:"⚙";font-size:16px}
+  .screen{padding:14px 16px 28px}
+  .title-wrap{gap:22px}
+  .title-main .mascot-row{flex-direction:column-reverse;gap:6px}
+  .kicker{font-size:12px;letter-spacing:.12em}
+  .big-title,.has-mascot .big-title{font-size:17.5vw}
+  .has-mascot .title-main .mascot-big{width:44vw}
+  .mascot-big .say{font-size:16px;right:-26px;top:-18px;padding:6px 12px}
+  .sub-title{font-size:20px;margin:18px 0 22px}
+  .board{padding:16px}
+  .board h3{font-size:16px;flex-wrap:wrap;gap:4px}
+  .agent{gap:12px;margin-bottom:20px}
+  .avatar,.has-mascot .avatar{flex:0 0 64px;height:64px}
+  .avatar .face-img{border-width:3px;box-shadow:3px 3px 0 var(--pink)}
+  .bubble{font-size:18px;padding:14px 16px;border-radius:20px;min-height:0;box-shadow:5px 5px 0 var(--pink)}
+  .bubble::before{top:20px}
+  .bubble .name{font-size:11px;margin-bottom:2px}
+  .choices{gap:14px}
+  .mega{flex-basis:100%;min-height:92px;font-size:30px;border-radius:22px}
+  .mega.no{font-size:24px}
+  .mega small{font-size:13px}
+  .chips{gap:8px}
+  .chip{font-size:15px;padding:10px 14px}
+  .inrow{flex-wrap:wrap;gap:10px}
+  .inrow input{flex:1 1 100%;font-size:18px;padding:14px 16px;border-radius:16px}
+  .inrow .voice-btn{width:64px;height:60px;font-size:24px;border-radius:16px}
+  .inrow .mega{flex:1;min-height:60px;font-size:22px;border-radius:16px}
+  .prep .ex{font-size:26px;margin:14px auto 20px}
+  .prep .tips{gap:8px;margin-bottom:22px}
+  .tip{font-size:13px;padding:10px 12px}.tip b{font-size:16px}
+  .megaphone{font-size:56px}
+  .rec-wrap{grid-template-columns:1fr 128px;gap:6px;height:auto}
+  .rec-left{grid-column:1}.rec-right{grid-column:1/-1;grid-row:2}
+  .meter{height:52vh;width:72px;padding:6px;gap:3px;border-radius:16px;margin:0}
+  .marks{right:-46px;width:40px;inset:6px -46px 6px auto}
+  .mark{font-size:12px;gap:2px}.mark::before{width:8px}
+  .live-score{font-size:96px}
+  .live-rank{font-size:40px}
+  .shout-now{font-size:40px}
+  .timebar{margin-top:10px}.timeleft{font-size:28px;margin-top:4px}
+  .heard{font-size:16px;min-height:0}
+  .result-wrap{grid-template-columns:1fr;gap:20px;max-height:none}
+  .card-stage{width:76vw;margin:0 auto}
+  .res-info{text-align:left}
+  .res-info .res-rank{font-size:64px}
+  .res-score .n{font-size:64px}
+  .res-detail{gap:8px}.res-detail div{font-size:13px;padding:8px 10px}.res-detail b{font-size:17px}
+  .res-comment{font-size:17px;padding:14px 16px}
+  .res-actions{grid-template-columns:1fr}
+  .res-actions .mega{min-height:72px;font-size:24px}
+  .bye .big{font-size:34px}
+  .bye p{font-size:17px}
+  .bye .mega{flex-basis:100%;white-space:normal}
+  .count.goword{font-size:22vw}
+  .confirm-text{font-size:40px}
+}
 @media (max-height:700px){
   .mega{min-height:110px}
   .agent{margin-bottom:22px}
@@ -256,7 +325,7 @@ body.demo .demo-tag{display:block}
 
 <div id="app">
   <header>
-    <div class="logo" id="logoHome"><img class="logo-mascot" src="shout-ai.png" alt="">SHOUT<span>!</span> AGENT</div>
+    <div class="logo" id="logoHome"><span class="logo-mascot"></span>SHOUT<span>!</span> AGENT</div>
     <button class="hbtn" id="openSettings" aria-label="スタッフ設定">⚙ スタッフ設定</button>
   </header>
   <main>
@@ -266,7 +335,7 @@ body.demo .demo-tag{display:block}
       <div class="title-wrap">
         <div class="title-main">
           <div class="kicker">CHALLENGE × VOICE × CARD</div>
-          <div class="big-title">SHOUT!</div>
+          <div class="mascot-row"><div class="big-title">SHOUT!</div><div class="mascot-big"><span class="say">叫んでこ！</span></div></div>
           <div class="sub-title">あなたの<b>挑戦</b>を叫んで、<br><b>レアカード</b>にしよう！</div>
           <div class="choices"><button class="mega go" id="btnStart">スタート！<small>タップしてはじめる</small></button></div>
         </div>
@@ -362,6 +431,7 @@ body.demo .demo-tag{display:block}
     <!-- 別れ -->
     <section class="screen" id="s-bye">
       <div class="bye">
+        <div class="mascot-big small"></div>
         <div class="big" id="byeBig">またの機会に<br>お待ちしてます！</div>
         <p id="byeText"></p>
         <div class="choices"><button class="mega cool" id="btnByeTop">トップへもどる</button></div>
