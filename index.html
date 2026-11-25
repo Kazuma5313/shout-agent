@@ -132,6 +132,17 @@ main{flex:1;position:relative}
 .voice-btn{flex:0 0 auto;width:84px;border-radius:22px;border:3px solid rgba(53,224,255,.6);background:rgba(53,224,255,.12);color:var(--cyan);font-size:32px;cursor:pointer}
 .voice-btn.rec{background:var(--pink);border-color:var(--pink);color:#fff;animation:breathe .8s infinite}
 
+.picks{display:flex;flex-direction:column;gap:14px}
+.pick{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:18px;text-align:left;border:3px solid rgba(255,225,74,.55);background:linear-gradient(100deg,rgba(255,61,139,.22),rgba(20,8,36,.9) 60%);color:var(--ink);border-radius:24px;padding:18px 22px;cursor:pointer;box-shadow:0 8px 0 rgba(0,0,0,.4);transition:transform .08s,box-shadow .08s,border-color .15s;font:inherit}
+.pick:hover{border-color:var(--yellow)}
+.pick:active{transform:translateY(6px);box-shadow:0 2px 0 rgba(0,0,0,.4)}
+.pick .no{font-family:var(--head);font-size:26px;width:46px;height:46px;border-radius:50%;display:grid;place-items:center;background:var(--yellow);color:#1b0b24}
+.pick .q{font-family:var(--head);font-size:clamp(22px,2.6vw,34px);line-height:1.3;color:var(--yellow)}
+.pick .go{font-size:15px;background:var(--pink);color:#fff;padding:8px 14px;border-radius:999px;white-space:nowrap}
+.pick-sub{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.sm-btn{font:inherit;font-size:18px;padding:14px 22px;border-radius:16px;cursor:pointer;background:rgba(53,224,255,.14);border:2px solid rgba(53,224,255,.6);color:var(--cyan)}
+.sm-btn.ghost{background:rgba(255,255,255,.06);border-color:rgba(255,255,255,.2);color:var(--dim)}
+.pick-note{text-align:center;color:var(--dim);font-size:15px}
 /* ===== 叫ぶ準備 ===== */
 .prep{text-align:center;max-width:980px}
 .prep .ex{margin:22px auto 30px;font-size:clamp(28px,4vw,52px);font-family:var(--head);color:var(--yellow);line-height:1.3;text-shadow:4px 4px 0 var(--pink)}
@@ -237,7 +248,7 @@ main{flex:1;position:relative}
 .levelpreview{height:12px;border-radius:6px;background:rgba(255,255,255,.08);overflow:hidden;margin-top:8px;width:180px}
 .levelpreview i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--cyan),var(--yellow),var(--pink))}
 .panel textarea,.panel .edit-in{width:100%;font:inherit;font-size:24px;padding:14px 18px;border-radius:16px;border:2px solid rgba(255,225,74,.5);background:#0f0719;color:var(--ink);outline:none}
-.demo-tag{position:fixed;left:16px;bottom:14px;z-index:5;font-size:13px;color:#1b0b24;background:var(--lime);padding:4px 10px;border-radius:8px;display:none}
+.demo-tag{pointer-events:none;position:fixed;left:16px;bottom:14px;z-index:5;font-size:13px;color:#1b0b24;background:var(--lime);padding:4px 10px;border-radius:8px;display:none}
 body.demo .demo-tag{display:block}
 
 @media (max-width:900px){
@@ -304,6 +315,12 @@ body.demo .demo-tag{display:block}
   .res-comment{font-size:17px;padding:14px 16px}
   .res-actions{grid-template-columns:1fr}
   .res-actions .mega{min-height:72px;font-size:24px}
+  .pick{grid-template-columns:auto 1fr;gap:12px;padding:14px 16px;border-radius:18px}
+  .pick .go{grid-column:1/-1;justify-self:end;font-size:13px;padding:6px 12px;margin-top:-4px}
+  .pick .no{width:36px;height:36px;font-size:20px}
+  .pick .q{font-size:20px}
+  .demo-tag{bottom:auto;top:58px;left:auto;right:14px;font-size:11px}
+  .sm-btn{font-size:15px;padding:12px 16px}
   .bye .big{font-size:34px}
   .bye p{font-size:17px}
   .bye .mega{flex-basis:100%;white-space:normal}
@@ -703,7 +720,7 @@ function choiceRow(...btns){ const d = document.createElement('div'); d.classNam
    ヒアリングフロー
    ========================================================= */
 function startFlow(){
-  S.path=null; S.topic=''; S.nothing=false; S.kind=''; S.result=null;
+  S.path=null; S.topic=''; S.nothing=false; S.kind=''; S.like=null; S.next=null; S.result=null;
   ctx(); SFX.yes();
   talk('ようこそ！シャウトAIです。<br>いきなりですが…<em>いま、なにか挑戦していること</em>はありますか？', () =>
     choiceRow(
@@ -795,18 +812,109 @@ function affirmNo(){
     S.suggested = makeShout(S.topic);
     html = `<em>「${t}」</em>に取り組んでるんですね。<br>${g.no}<br>それ、<em>立派な挑戦</em>ですよ！`;
   }
-  talk(html, () => choiceRow(megaBtn('つぎへ', 'yes', inviteNo)));
+  const next = (S.kind === 'absorbed' || S.kind === 'now') ? digLike : () => pickShout(shoutIdeas());
+  talk(html, () => choiceRow(megaBtn('つぎへ', 'yes', next)));
 }
-function inviteNo(){
-  talk('せっかくなので…<br>よかったら、それを<em>叫んで</em>みませんか？<br>（もちろん、無理にとは言いません！）', () =>
-    choiceRow(
-      megaBtn('叫んでみる！', 'go', () => { SFX.yes(); toPrep(); }, 'カードをゲットする'),
-      megaBtn('今回はやめておく', 'no', () => { SFX.no(); farewell(); }),
-    ));
+
+/* ---- 深掘り：好きなところ → この先やりたいこと → 叫びの提案 ---- */
+const LIKES = [
+  {label:'夢中になれる',       shout:x => `${x}に夢中だーー！`},
+  {label:'スッキリする',       shout:x => `${x}で、毎日スッキリするぞーー！`},
+  {label:'上達していく',       shout:x => `${x}、昨日の自分をこえるぞーー！`},
+  {label:'だれかが喜んでくれる', shout:x => `${x}で、みんなを笑顔にするぞーー！`},
+  {label:'ほっとできる',       shout:x => `${x}は、わたしの元気の源だーー！`},
+  {label:'仲間とできる',       shout:x => `${x}仲間、最高ーー！`},
+];
+const NEXTS = [
+  {label:'もっと上手くなりたい', shout:x => `${x}、もっと上手くなるぞーー！`},
+  {label:'だれかと一緒にやりたい', shout:x => `${x}、仲間をふやすぞーー！`},
+  {label:'毎日つづけたい',      shout:x => `${x}、毎日つづけるぞーー！`},
+  {label:'人に広めたい',        shout:x => `${x}の楽しさ、広めるぞーー！`},
+  {label:'今のまま楽しみたい',   shout:x => `${x}、これからも全力で楽しむぞーー！`},
+];
+const bare = t => t.replace(/[。！!？?]+$/,'').trim();
+function digLike(){
+  const t = esc(S.topic);
+  talk(`もう少しだけ聞かせてください！<br><em>「${t}」</em>の、<em>どんなところ</em>が好きですか？`, () =>
+    answerBox('例：無心になれるところ', LIKES.map(l => l.label), v => {
+      S.like = LIKES.find(l => l.label === v) || {label: v.replace(/ところ$/,''), shout:null};
+      digNext();
+    }));
+}
+function digNext(){
+  const t = esc(S.topic), like = esc(S.like.label);
+  talk(`<em>${like}</em>ところ、わかります！<br>じゃあ、この先<em>「${t}」</em>で、<br>ちょっとやってみたいことは？`, () =>
+    answerBox('例：大会に出てみたい', NEXTS.map(n => n.label), v => {
+      S.next = NEXTS.find(n => n.label === v) || {label: v, shout:null};
+      pickShout(shoutIdeas());
+    }));
+}
+// いまの会話から、叫ぶ言葉の候補を3つ作る
+function shoutIdeas(){
+  const x = bare(S.topic);
+  let list = [];
+  if(S.kind === 'self'){
+    list = [`${x}ーー！`, `自分、${x}ーー！`, 'これからも、がんばるぞーー！'];
+  }else if(S.kind === 'someday'){
+    list = [`${x}、やってみるぞーー！`, `いつか絶対、${x}ーー！`, `${x}、最初の一歩をふみだすぞーー！`];
+  }else{
+    const nx = S.next || {}, lk = S.like || {};
+    if(nx.shout) list.push(nx.shout(x));
+    else if(nx.label) list.push(makeShout(nx.label));
+    if(lk.shout) list.push(lk.shout(x));
+    else if(lk.label) list.push(`${bare(lk.label)}${x}、最高ーー！`);
+    list.push(`${x}、大好きだーー！`);
+    list.push(makeShout(x));
+  }
+  return [...new Set(list)].filter(v => v.length <= 40).slice(0, 3);
+}
+function pickShout(ideas){
+  let lead;
+  if(S.kind === 'self') lead = 'その言葉、そのまま叫んじゃいましょう！';
+  else if(S.next) lead = `<em>「${esc(S.next.label)}」</em>、いいですね！`;
+  else lead = 'その気持ち、声に出してみましょう！';
+  talk(`${lead}<br>それなら、<em>こんな叫び</em>はどうですか？<br>ピンときたものを選んでください！`, () => {
+    const wrap = document.createElement('div'); wrap.className = 'answer';
+    const list = document.createElement('div'); list.className = 'picks';
+    ideas.forEach((txt, i) => {
+      const b = document.createElement('button'); b.className = 'pick';
+      b.innerHTML = `<span class="no">${i+1}</span><span class="q">「${esc(txt)}」</span><span class="go">これで叫ぶ！</span>`;
+      b.onclick = e => { e.stopPropagation(); b.classList.add('burst'); SFX.yes(); S.suggested = txt; setTimeout(toPrep, 260); };
+      list.appendChild(b);
+    });
+    wrap.appendChild(list);
+    const row = document.createElement('div'); row.className = 'pick-sub';
+    const own = document.createElement('button'); own.className = 'sm-btn'; own.textContent = '✏️ 自分の言葉で叫ぶ';
+    own.onclick = e => { e.stopPropagation(); SFX.tap(); ownShout(); };
+    const no = document.createElement('button'); no.className = 'sm-btn ghost'; no.textContent = '今回はやめておく';
+    no.onclick = e => { e.stopPropagation(); SFX.no(); farewell(); };
+    row.appendChild(own); row.appendChild(no); wrap.appendChild(row);
+    const note = document.createElement('div'); note.className = 'pick-note'; note.textContent = 'もちろん、無理に叫ばなくても大丈夫です！';
+    wrap.appendChild(note);
+    return wrap;
+  });
+}
+function ownShout(){
+  talk('いいですね！<br><em>叫びたい言葉</em>を入れてください。<br>短く、言い切りの形がおすすめです！', () =>
+    answerBox('例：まだまだいけるぞー！', [], v => {
+      const t = bare(v);
+      S.suggested = /[ー〜]$/.test(t) ? `${t}！` : `${t}ーー！`;
+      toPrep();
+    }));
+}
+// 「〜したい」を「〜する」の言い切りに直す（叫びやすくするため）
+function wantToWill(t){
+  const R = [[/みたい$/,'みる'],[/したい$/,'する'],[/りたい$/,'る'],[/きたい$/,'く'],[/ぎたい$/,'ぐ'],[/ちたい$/,'つ'],[/びたい$/,'ぶ'],
+             [/いたい$/,'う'],[/([けべげせてめれえでねじ])たい$/,'$1る']];
+  for(const [re, to] of R) if(re.test(t)) return t.replace(re, to);
+  return null;
 }
 function makeShout(topic){
   const t = topic.replace(/[。！!？?]+$/,'');
-  if(/(する|やる|なる|たい|ぞ|ます)$/.test(t)) return `${t}ぞーー！`;
+  const will = /たい$/.test(t) ? wantToWill(t) : null;
+  if(will) return `${will}ぞーー！`;
+  if(/たい$/.test(t)) return `${t}を、かなえるぞーー！`;
+  if(/(する|やる|なる|ぞ|ます)$/.test(t)) return `${t}ぞーー！`;
   return `${t}、やりきるぞーー！`;
 }
 let byeTimer = null;
@@ -986,7 +1094,7 @@ function finishShout(peakP, sustain){
   const score = scoreOf(peakP, sustain);
   setTimeout(() => {
     const heard = (heardFinal || heardInterim || '').trim();
-    const text = cleanText(heard) || S.suggested.replace(/ぞーー！$/,'ぞ！');
+    const text = cleanText(heard) || S.suggested.replace(/ーー！$/,'！');
     stopRec();
     buildResult({score, peak: Math.round(peakP*100), sustain: Math.min(sustain, settings.dur), text, heard: !!heard});
   }, 1700);
