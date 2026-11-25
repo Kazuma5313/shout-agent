@@ -755,12 +755,24 @@ function askWhat(){
 }
 function inviteYes(){
   const g = genreOf(S.topic);
-  S.suggested = makeShout(S.topic);
-  talk(`<em>「${esc(S.topic)}」</em>！最高です。<br>${g.yes}<br>その挑戦、ここで<em>叫んで</em>みませんか？`, () =>
-    choiceRow(
-      megaBtn('叫ぶ！', 'go', () => { SFX.yes(); toPrep(); }, 'カードをゲットする'),
-      megaBtn('今日はやめておく', 'no', () => { SFX.no(); farewell(); }),
-    ));
+  S.kind = 'yes';
+  talk(`<em>「${esc(S.topic)}」</em>！最高です。<br>${g.yes}`, () => choiceRow(megaBtn('つぎへ', 'yes', askGoal)));
+}
+// 「ある」ルートの深掘り：その挑戦でいちばん叶えたいこと
+const GOALS = [
+  {label:'最後までやりきりたい', shout:x => `${x}、最後までやりきるぞーー！`},
+  {label:'結果を出したい',       shout:x => `${x}、絶対に結果を出すぞーー！`},
+  {label:'毎日つづけたい',       shout:x => `${x}、毎日つづけるぞーー！`},
+  {label:'だれかに見てほしい',    shout:x => `${x}、見ててくれーー！`},
+  {label:'新しい自分になりたい',  shout:x => `${x}で、新しい自分になるぞーー！`},
+  {label:'とにかく楽しみたい',    shout:x => `${x}、全力で楽しむぞーー！`},
+];
+function askGoal(){
+  talk(`ひとつだけ聞かせてください！<br><em>「${esc(S.topic)}」</em>で、<br><em>いちばん叶えたいこと</em>は何ですか？`, () =>
+    answerBox('例：秋の大会で優勝したい', GOALS.map(g => g.label), v => {
+      S.next = GOALS.find(g => g.label === v) || {label: v, shout:null};
+      pickShout(shoutIdeas());
+    }));
 }
 // 「ない」系の答え（引き出しの問いへ進む）
 const NONE_RE = /^(特にない|とくにない|特になし|とくになし|ない|なし|本当にない|ほんとにない|思いつかない|わからない|分からない|べつに|別に)[。!！…]*$/;
@@ -857,6 +869,13 @@ function shoutIdeas(){
     list = [`${x}ーー！`, `自分、${x}ーー！`, 'これからも、がんばるぞーー！'];
   }else if(S.kind === 'someday'){
     list = [`${x}、やってみるぞーー！`, `いつか絶対、${x}ーー！`, `${x}、最初の一歩をふみだすぞーー！`];
+  }else if(S.kind === 'yes'){
+    const nx = S.next || {};
+    if(nx.shout) list.push(nx.shout(x)); else if(nx.label) list.push(makeShout(nx.label));
+    list.push(`${x}、絶対いけるーー！`);
+    const base = makeShout(x);
+    if(!(list[0] || '').includes('やりきる') || !base.includes('やりきる')) list.push(base);
+    list.push(`${x}、負けないぞーー！`);
   }else{
     const nx = S.next || {}, lk = S.like || {};
     if(nx.shout) list.push(nx.shout(x));
